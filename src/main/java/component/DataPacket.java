@@ -1,13 +1,13 @@
 package component;
 
-public class Packet {
+public class DataPacket {
 
     private int id;
     private byte[] bytes;
     private String fName;
     private boolean isLastPacket;
 
-    public Packet(int id, byte[] bytes, String fName, boolean isLast) {
+    public DataPacket(int id, byte[] bytes, String fName, boolean isLast) {
         this.id = id;
         this.bytes = bytes;
         this.fName = fName;
