@@ -1,6 +1,8 @@
 package component;
 
-public class DataPacket {
+import java.io.Serializable;
+
+public class DataPacket implements Serializable {
 
     private int id;
     private byte[] bytes;

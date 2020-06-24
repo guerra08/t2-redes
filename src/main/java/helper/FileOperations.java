@@ -16,9 +16,11 @@ public class FileOperations {
         raf.close();
         ArrayList<DataPacket> partsArray = new ArrayList<>();
         int id = 0;
+        int parts = fileBytes.length / 512;
         for (int i = 0; i < fileBytes.length - 512 + 1; i += 512){
-            DataPacket p = new DataPacket(id, Arrays.copyOfRange(fileBytes, i, i + 512), "lorem.txt", i == fileBytes.length - 1);
+            DataPacket p = new DataPacket(id, Arrays.copyOfRange(fileBytes, i, i + 512), "lorem.txt", id == (parts - 1));
             partsArray.add(p);
+            id++;
         }
         return partsArray;
     }
