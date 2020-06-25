@@ -4,11 +4,11 @@ import helper.FileOperations;
 import network.AckPacket;
 import network.Packet;
 import network.UDPCommon;
+import structures.PacketList;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.util.ArrayList;
 
 public class Receiver extends UDPCommon {
 
@@ -16,14 +16,14 @@ public class Receiver extends UDPCommon {
     private final int SENDER_PORT = 9876;
     private DatagramSocket socket;
     private InetAddress ip;
-    private ArrayList<Packet> receivedPackets;
+    private PacketList receivedPackets;
 
     public Receiver() {
         try{
             ip = InetAddress.getByName("localhost");
             socket = new DatagramSocket(RECEIVER_PORT);
             socket.setSoTimeout(500);
-            receivedPackets = new ArrayList<>();
+            receivedPackets = new PacketList();
             System.out.println("Starting receiver...");
             _startReceiver();
         }catch (Exception e){
@@ -49,7 +49,7 @@ public class Receiver extends UDPCommon {
                 _sendPacket(new AckPacket(dPacket.getSeq() + 1), socket, ip, SENDER_PORT);
                 if(dPacket.isLastPacket()){
                     System.out.println("Last packet received, seq " + dPacket.getSeq());
-                    FileOperations.mountFileFromPackets(receivedPackets);
+                    FileOperations.mountFileFromPackets(receivedPackets.getInternalList());
                     break;
                 }
             }catch (IOException | ClassNotFoundException e){

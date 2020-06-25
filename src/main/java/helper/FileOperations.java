@@ -21,10 +21,16 @@ public class FileOperations {
         ArrayList<Packet> partsArray = new ArrayList<>();
         int id = 0;
         int parts = fileBytes.length / 512;
-        for (int i = 0; i < fileBytes.length - 512 + 1; i += 512){
-            Packet p = new Packet(id, Arrays.copyOfRange(fileBytes, i, i + 512), "lorem.txt", id == (parts - 1));
+        if(parts == 0){
+            Packet p = new Packet(id, Arrays.copyOfRange(fileBytes, 0, fileBytes.length), "lorem.txt", true);
             partsArray.add(p);
-            id++;
+        }
+        else{
+            for (int i = 0; i < fileBytes.length - 512 + 1; i += 512){
+                Packet p = new Packet(id, Arrays.copyOfRange(fileBytes, i, i + 512), "lorem.txt", id == (parts - 1));
+                partsArray.add(p);
+                id++;
+            }
         }
         return partsArray;
     }

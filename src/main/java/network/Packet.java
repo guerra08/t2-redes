@@ -3,7 +3,7 @@ package network;
 import java.io.Serializable;
 import java.util.zip.CRC32;
 
-public class Packet implements Serializable {
+public class Packet implements Serializable, Comparable<Packet> {
 
     private int seq;
     private byte[] bytes;
@@ -50,5 +50,10 @@ public class Packet implements Serializable {
         CRC32 crcObject = new CRC32();
         crcObject.update(byteArray);
         return crcObject.getValue();
+    }
+
+    @Override
+    public int compareTo(Packet p){
+        return Integer.compare(this.seq, p.seq);
     }
 }
