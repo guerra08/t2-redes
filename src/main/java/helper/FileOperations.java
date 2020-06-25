@@ -13,23 +13,26 @@ public class FileOperations {
      * @return <ArrayList<Packet>> List of packets
      * @throws IOException If file reading is not ok
      */
-    public static ArrayList<Packet> readFileAndReturnBytePartsAsPackets() throws IOException {
-        RandomAccessFile raf = new RandomAccessFile("src/main/resources/lorem.txt", "r");
+    public static ArrayList<Packet> readFileAndReturnBytePartsAsPackets(String fileName) throws IOException {
+        RandomAccessFile raf = new RandomAccessFile(fileName, "r");
+        String fName = fileName.substring(fileName.lastIndexOf('/') + 1);
         byte[] fileBytes = new byte[(int) raf.length()];
         raf.readFully(fileBytes);
         raf.close();
         ArrayList<Packet> partsArray = new ArrayList<>();
-        int id = 0;
         int parts = fileBytes.length / 512;
+        System.out.println(parts);
         if(parts == 0){
-            Packet p = new Packet(id, Arrays.copyOfRange(fileBytes, 0, fileBytes.length), "lorem.txt", true);
+            Packet p = new Packet(0, Arrays.copyOfRange(fileBytes, 0, fileBytes.length), fName, true);
             partsArray.add(p);
         }
         else{
-            for (int i = 0; i < fileBytes.length - 512 + 1; i += 512){
-                Packet p = new Packet(id, Arrays.copyOfRange(fileBytes, i, i + 512), "lorem.txt", id == (parts - 1));
+            int start = 0;
+            for (int i = 0; i <= parts; i++){
+                int end = Math.min(start + 512, fileBytes.length);
+                Packet p = new Packet(i, Arrays.copyOfRange(fileBytes, start, end), fName, i == (parts));
                 partsArray.add(p);
-                id++;
+                start += 512;
             }
         }
         return partsArray;

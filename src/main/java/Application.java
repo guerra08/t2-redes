@@ -7,7 +7,7 @@ public class Application {
 
     public static void main(String[] args) {
         try{
-            ArrayList<Packet> fileBytes = FileOperations.readFileAndReturnBytePartsAsPackets();
+            System.out.println("Nothing here...");
         }catch (Exception e){
             System.out.println(e.getMessage());
         }

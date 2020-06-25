@@ -68,7 +68,7 @@ public class Sender extends UDPCommon {
 
     public static void main(String[] args) {
         try{
-            new Sender(FileOperations.readFileAndReturnBytePartsAsPackets());
+            new Sender(FileOperations.readFileAndReturnBytePartsAsPackets("src/main/resources/lorem.txt"));
         }catch (Exception e){
             System.err.println(e.getMessage());
         }
