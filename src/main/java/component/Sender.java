@@ -29,7 +29,7 @@ public class Sender extends UDPCommon{
                 _senderUsingSlowStart();
             }
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e.getMessage());
         }
     }
 
@@ -45,9 +45,10 @@ public class Sender extends UDPCommon{
                 is.close();
                 byteStream.close();
                 _checkIncomingPacketSlowStart(confP);
+                if(packets.isEmpty()) break;
             }catch (IOException | ClassNotFoundException e){
                 if(e instanceof InterruptedIOException){
-                    System.out.println("Timed out.");
+                    System.err.println("Timed out.");
                 }
             }
         }
@@ -68,7 +69,7 @@ public class Sender extends UDPCommon{
         try{
             new Sender("slow", FileOperations.readFileAndReturnBytePartsAsPackets());
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e.getMessage());
         }
     }
 

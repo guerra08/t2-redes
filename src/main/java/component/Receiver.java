@@ -1,9 +1,12 @@
 package component;
 
+import helper.FileOperations;
+
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.ArrayList;
 
 public class Receiver extends UDPCommon{
 
@@ -11,18 +14,20 @@ public class Receiver extends UDPCommon{
     private final int SENDER_PORT = 9876;
     private DatagramSocket socket;
     private InetAddress ip;
+    private ArrayList<DataPacket> receivedPackets;
 
     public Receiver(String method) {
         try{
             ip = InetAddress.getByName("localhost");
             socket = new DatagramSocket(RECEIVER_PORT);
             socket.setSoTimeout(500);
+            receivedPackets = new ArrayList<>();
             System.out.println("Starting receiver...");
             if(method.equals("slow")){
                 _receiverUsingSlowStart();
             }
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
         }
     }
 
@@ -38,14 +43,16 @@ public class Receiver extends UDPCommon{
                 System.out.println("Received packet " + dPacket.getId());
                 is.close();
                 byteStream.close();
+                receivedPackets.add(dPacket);
                 _sendPacket(new ConfPacket(dPacket.getId()), socket, ip, SENDER_PORT);
                 if(dPacket.isLastPacket()){
                     System.out.println("Last packet received, id " + dPacket.getId());
+                    FileOperations.mountFileFromPackets(receivedPackets);
                     break;
                 }
             }catch (IOException | ClassNotFoundException e){
                 if(e instanceof InterruptedIOException){
-                    System.out.println("Timed out.");
+                    System.err.println("Timed out.");
                 }
             }
         }

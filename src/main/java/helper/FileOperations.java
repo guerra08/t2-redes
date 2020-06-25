@@ -2,8 +2,7 @@ package helper;
 
 import component.DataPacket;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -23,6 +22,20 @@ public class FileOperations {
             id++;
         }
         return partsArray;
+    }
+
+    public static void mountFileFromPackets(ArrayList<DataPacket> packets){
+        try{
+            File fileToCreate = new File("src/main/resources/received/" + packets.get(0).getfName());
+            OutputStream os = new FileOutputStream(fileToCreate);
+            while(!packets.isEmpty()){
+                os.write(packets.remove(0).getBytes());
+            }
+            os.close();
+        }catch (Exception e){
+            System.err.println(e.getMessage());
+        }
+
     }
 
 }
