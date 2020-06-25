@@ -45,7 +45,7 @@ public class Sender extends UDPCommon {
                 AckPacket confP = (AckPacket) is.readObject();
                 is.close();
                 byteStream.close();
-                _checkIncomingPacketSlowStart(confP);
+                _checkIncomingPacket(confP);
                 if(packets.isEmpty()) break;
             }catch (IOException | ClassNotFoundException e){
                 if(e instanceof InterruptedIOException){
@@ -55,7 +55,7 @@ public class Sender extends UDPCommon {
         }
     }
 
-    private void _checkIncomingPacketSlowStart(AckPacket confP){
+    private void _checkIncomingPacket(AckPacket confP){
         if(lastSentPacket != null && confP.getAckValue() == lastSentPacket.getSeq() + 1){
             lastSentPacket = null;
         }
@@ -68,7 +68,7 @@ public class Sender extends UDPCommon {
 
     public static void main(String[] args) {
         try{
-            new Sender(FileOperations.readFileAndReturnBytePartsAsPackets("src/main/resources/lorem.txt"));
+            new Sender(FileOperations.readFileAndReturnBytePartsAsPackets("src/main/resources/iris.data"));
         }catch (Exception e){
             System.err.println(e.getMessage());
         }

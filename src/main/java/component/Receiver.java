@@ -17,6 +17,7 @@ public class Receiver extends UDPCommon {
     private DatagramSocket socket;
     private InetAddress ip;
     private PacketList receivedPackets;
+    private int ack;
 
     public Receiver() {
         try{
@@ -24,6 +25,7 @@ public class Receiver extends UDPCommon {
             socket = new DatagramSocket(RECEIVER_PORT);
             socket.setSoTimeout(500);
             receivedPackets = new PacketList();
+            ack = 0;
             System.out.println("Starting receiver...");
             _startReceiver();
         }catch (Exception e){
@@ -44,9 +46,12 @@ public class Receiver extends UDPCommon {
                 is.close();
                 byteStream.close();
                 if(dPacket.getCrc() == Packet.calculateCRC(dPacket.getBytes())){
-                    receivedPackets.add(dPacket);
+                    if(dPacket.getSeq() == ack){
+                        ack++;
+                        receivedPackets.add(dPacket);
+                        _sendPacket(new AckPacket(ack), socket, ip, SENDER_PORT);
+                    }
                 }
-                _sendPacket(new AckPacket(dPacket.getSeq() + 1), socket, ip, SENDER_PORT);
                 if(dPacket.isLastPacket()){
                     System.out.println("Last packet received, seq " + dPacket.getSeq());
                     FileOperations.mountFileFromPackets(receivedPackets.getInternalList());
