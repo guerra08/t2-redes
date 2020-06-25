@@ -1,6 +1,6 @@
 package helper;
 
-import component.DataPacket;
+import network.Packet;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -8,25 +8,34 @@ import java.util.Arrays;
 
 public class FileOperations {
 
-    public static ArrayList<DataPacket> readFileAndReturnBytePartsAsPackets() throws IOException {
+    /**
+     * Reads a file and returns it's parts divided in 512 bytes pieces (packets)
+     * @return <ArrayList<Packet>> List of packets
+     * @throws IOException If file reading is not ok
+     */
+    public static ArrayList<Packet> readFileAndReturnBytePartsAsPackets() throws IOException {
         RandomAccessFile raf = new RandomAccessFile("src/main/resources/lorem.txt", "r");
         byte[] fileBytes = new byte[(int) raf.length()];
         raf.readFully(fileBytes);
         raf.close();
-        ArrayList<DataPacket> partsArray = new ArrayList<>();
+        ArrayList<Packet> partsArray = new ArrayList<>();
         int id = 0;
         int parts = fileBytes.length / 512;
         for (int i = 0; i < fileBytes.length - 512 + 1; i += 512){
-            DataPacket p = new DataPacket(id, Arrays.copyOfRange(fileBytes, i, i + 512), "lorem.txt", id == (parts - 1));
+            Packet p = new Packet(id, Arrays.copyOfRange(fileBytes, i, i + 512), "lorem.txt", id == (parts - 1));
             partsArray.add(p);
             id++;
         }
         return partsArray;
     }
 
-    public static void mountFileFromPackets(ArrayList<DataPacket> packets){
+    /**
+     * Given a list of packets, mount them in a new file.
+     * @param packets The list of packets
+     */
+    public static void mountFileFromPackets(ArrayList<Packet> packets){
         try{
-            File fileToCreate = new File("src/main/resources/received/" + packets.get(0).getfName());
+            File fileToCreate = new File("src/main/resources/received/" + packets.get(0).getFName());
             OutputStream os = new FileOutputStream(fileToCreate);
             while(!packets.isEmpty()){
                 os.write(packets.remove(0).getBytes());

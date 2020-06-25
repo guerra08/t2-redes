@@ -1,37 +1,37 @@
 package component;
 
 import helper.FileOperations;
-
+import network.AckPacket;
+import network.Packet;
+import network.UDPCommon;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
-public class Receiver extends UDPCommon{
+public class Receiver extends UDPCommon {
 
     private final int RECEIVER_PORT = 9877;
     private final int SENDER_PORT = 9876;
     private DatagramSocket socket;
     private InetAddress ip;
-    private ArrayList<DataPacket> receivedPackets;
+    private ArrayList<Packet> receivedPackets;
 
-    public Receiver(String method) {
+    public Receiver() {
         try{
             ip = InetAddress.getByName("localhost");
             socket = new DatagramSocket(RECEIVER_PORT);
             socket.setSoTimeout(500);
             receivedPackets = new ArrayList<>();
             System.out.println("Starting receiver...");
-            if(method.equals("slow")){
-                _receiverUsingSlowStart();
-            }
+            _startReceiver();
         }catch (Exception e){
-            System.err.println(e);
+            System.err.println(e.getMessage());
         }
     }
 
-    private void _receiverUsingSlowStart(){
+    private void _startReceiver(){
         while(true){
             try{
                 byte[] buf = new byte[1024];
@@ -39,14 +39,16 @@ public class Receiver extends UDPCommon{
                 socket.receive(dp);
                 ByteArrayInputStream byteStream = new ByteArrayInputStream(buf);
                 ObjectInputStream is = new ObjectInputStream(new BufferedInputStream(byteStream));
-                DataPacket dPacket = (DataPacket) is.readObject();
-                System.out.println("Received packet " + dPacket.getId());
+                Packet dPacket = (Packet) is.readObject();
+                System.out.println("Received packet " + dPacket.getSeq());
                 is.close();
                 byteStream.close();
-                receivedPackets.add(dPacket);
-                _sendPacket(new ConfPacket(dPacket.getId()), socket, ip, SENDER_PORT);
+                if(dPacket.getCrc() == Packet.calculateCRC(dPacket.getBytes())){
+                    receivedPackets.add(dPacket);
+                }
+                _sendPacket(new AckPacket(dPacket.getSeq() + 1), socket, ip, SENDER_PORT);
                 if(dPacket.isLastPacket()){
-                    System.out.println("Last packet received, id " + dPacket.getId());
+                    System.out.println("Last packet received, seq " + dPacket.getSeq());
                     FileOperations.mountFileFromPackets(receivedPackets);
                     break;
                 }
@@ -59,6 +61,6 @@ public class Receiver extends UDPCommon{
     }
 
     public static void main(String[] args) {
-        new Receiver("slow");
+        new Receiver();
     }
 }

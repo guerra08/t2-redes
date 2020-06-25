@@ -1,4 +1,4 @@
-package component;
+package network;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
@@ -8,6 +8,13 @@ import java.net.InetAddress;
 
 public abstract class UDPCommon {
 
+    /**
+     * Sends a packet to a given port in an ip address using a DatagramSocket.
+     * @param packet The packet being sent
+     * @param socket The target socket
+     * @param ip IP address
+     * @param port Port number
+     */
     protected void _sendPacket(Object packet, DatagramSocket socket, InetAddress ip, int port){
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -21,7 +28,7 @@ public abstract class UDPCommon {
             socket.send(sendPacket);
             System.out.println("Packet sent to port " + port);
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e.getMessage());
         }
     }
 
