@@ -17,9 +17,9 @@ public class Sender extends UDPCommon {
     private final int RECEIVER_PORT = 9877;
     private DatagramSocket socket;
     private InetAddress ip;
-    private Packet lastSentPacket;
     private ArrayList<Packet> packets;
     private boolean connected;
+    private int lastAckReceived;
 
     public Sender(ArrayList<Packet> packets) {
         try {
@@ -33,7 +33,7 @@ public class Sender extends UDPCommon {
                 _sendPacket(new Connection(0), socket, ip, RECEIVER_PORT);
                 _connect(socket);
             }
-            _sendPacket(packets.remove(0), socket, ip, RECEIVER_PORT);
+            _sendPacket(packets.get(0), socket, ip, RECEIVER_PORT);
             _startSender();
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -52,7 +52,6 @@ public class Sender extends UDPCommon {
                 is.close();
                 byteStream.close();
                 _checkIncomingPacket(confP);
-                if (packets.isEmpty()) break;
             } catch (IOException | ClassNotFoundException e) {
                 if (e instanceof InterruptedIOException) {
                     System.err.println("Timed out.");
@@ -69,12 +68,12 @@ public class Sender extends UDPCommon {
             }
         } else if (packet instanceof AckPacket) {
             AckPacket confP = (AckPacket) packet;
-            if (lastSentPacket != null && confP.getAckValue() == lastSentPacket.getSeq() + 1) {
-                lastSentPacket = null;
-            }
+            lastAckReceived = confP.getAckValue();
             int i = 0;
-            while (i < 2 && packets.size() != 0) {
-                _sendPacket(packets.remove(0), socket, ip, RECEIVER_PORT);
+            int ackAux = lastAckReceived;
+            while (i < 2 && ackAux < packets.size()) {
+                _sendPacket(packets.get(ackAux), socket, ip, RECEIVER_PORT);
+                ackAux++;
                 i++;
             }
         }

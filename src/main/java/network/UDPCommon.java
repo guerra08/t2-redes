@@ -25,12 +25,19 @@ public abstract class UDPCommon {
             bos.close();
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, ip, port);
             socket.send(sendPacket);
-            System.out.println("Packet of type " + packet.getClass().getSimpleName() + " sent to port " + port);
+            if(packet instanceof Packet){
+                System.out.println("Packet seq " + ((Packet) packet).getSeq());
+            }
+            System.out.println("Packet of type " + packet.getClass().getSimpleName() + " sent to port " + port + "\n");
         }catch (Exception e){
             System.err.println(e.getMessage());
         }
     }
 
+    /**
+     * Method for connecting the sender and the receiver
+     * @param socket The socket being used
+     */
     protected void _connect(DatagramSocket socket) {
         try {
             byte[] buf = new byte[512];
@@ -50,5 +57,9 @@ public abstract class UDPCommon {
         }
     }
 
+    /**
+     * Method for checking the received packet
+     * @param packet Received packet
+     */
     protected abstract void _checkIncomingPacket(Object packet);
 }
