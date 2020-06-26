@@ -2,6 +2,7 @@ package component;
 
 import helper.FileOperations;
 import network.AckPacket;
+import network.Connection;
 import network.Packet;
 import network.UDPCommon;
 import structures.PacketList;
@@ -18,15 +19,22 @@ public class Receiver extends UDPCommon {
     private InetAddress ip;
     private PacketList receivedPackets;
     private int ack;
+    private boolean connected;
+    private boolean receivedAllPackets;
 
     public Receiver() {
         try{
+            receivedAllPackets = false;
+            connected = false;
             ip = InetAddress.getByName("localhost");
             socket = new DatagramSocket(RECEIVER_PORT);
             socket.setSoTimeout(500);
             receivedPackets = new PacketList();
             ack = 0;
             System.out.println("Starting receiver...");
+            while(!connected){
+                _connect(socket);
+            }
             _startReceiver();
         }catch (Exception e){
             System.err.println(e.getMessage());
@@ -34,33 +42,48 @@ public class Receiver extends UDPCommon {
     }
 
     private void _startReceiver(){
-        while(true){
+        while(!receivedAllPackets){
             try{
                 byte[] buf = new byte[1024];
                 DatagramPacket dp = new DatagramPacket(buf, buf.length);
                 socket.receive(dp);
                 ByteArrayInputStream byteStream = new ByteArrayInputStream(buf);
                 ObjectInputStream is = new ObjectInputStream(new BufferedInputStream(byteStream));
-                Packet dPacket = (Packet) is.readObject();
-                System.out.println("Received packet " + dPacket.getSeq());
+                Packet packet = (Packet) is.readObject();
+                System.out.println("Received packet seq " + packet.getSeq() + " of type " + packet.getClass().getSimpleName());
                 is.close();
                 byteStream.close();
-                if(dPacket.getCrc() == Packet.calculateCRC(dPacket.getBytes())){
-                    if(dPacket.getSeq() == ack){
-                        ack++;
-                        receivedPackets.add(dPacket);
-                        _sendPacket(new AckPacket(ack), socket, ip, SENDER_PORT);
-                    }
-                }
-                if(dPacket.isLastPacket()){
-                    System.out.println("Last packet received, seq " + dPacket.getSeq());
-                    FileOperations.mountFileFromPackets(receivedPackets.getInternalList());
-                    break;
-                }
+                _checkIncomingPacket(packet);
             }catch (IOException | ClassNotFoundException e){
                 if(e instanceof InterruptedIOException){
                     System.err.println("Timed out.");
                 }
+            }
+        }
+    }
+
+    protected void _checkIncomingPacket(Object packet){
+        if(packet instanceof Connection){
+            Connection conn = (Connection) packet;
+            if(conn.getStep() == 0){
+                conn.increaseStep();
+                _sendPacket(conn, socket, ip, SENDER_PORT);
+                connected = true;
+            }
+        }
+        else if(packet instanceof Packet){
+            Packet dPacket = (Packet) packet;
+            if(dPacket.getCrc() == Packet.calculateCRC(dPacket.getBytes())){
+                if(dPacket.getSeq() == ack){
+                    ack++;
+                    receivedPackets.add(dPacket);
+                    _sendPacket(new AckPacket(ack), socket, ip, SENDER_PORT);
+                }
+            }
+            if(dPacket.isLastPacket()){
+                System.out.println("Last packet received, seq " + dPacket.getSeq());
+                FileOperations.mountFileFromPackets(receivedPackets.getInternalList());
+                receivedAllPackets = true;
             }
         }
     }

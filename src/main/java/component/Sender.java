@@ -2,9 +2,9 @@ package component;
 
 import helper.FileOperations;
 import network.AckPacket;
+import network.Connection;
 import network.Packet;
 import network.UDPCommon;
-
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -19,24 +19,30 @@ public class Sender extends UDPCommon {
     private InetAddress ip;
     private Packet lastSentPacket;
     private ArrayList<Packet> packets;
+    private boolean connected;
 
     public Sender(ArrayList<Packet> packets) {
         try {
+            connected = false;
             ip = InetAddress.getByName("localhost");
             socket = new DatagramSocket(SENDER_PORT);
-            //socket.setSoTimeout(500);
+            socket.setSoTimeout(500);
             System.out.println("Starting sender...");
             this.packets = packets;
+            while(!connected){
+                _sendPacket(new Connection(0), socket, ip, RECEIVER_PORT);
+                _connect(socket);
+            }
             _sendPacket(packets.remove(0), socket, ip, RECEIVER_PORT);
             _startSender();
-        }catch (Exception e){
+        } catch (Exception e) {
             System.err.println(e.getMessage());
         }
     }
 
-    private void _startSender(){
-        while(true){
-            try{
+    private void _startSender() {
+        while (true) {
+            try {
                 byte[] buf = new byte[1024];
                 DatagramPacket dp = new DatagramPacket(buf, buf.length);
                 socket.receive(dp);
@@ -46,30 +52,38 @@ public class Sender extends UDPCommon {
                 is.close();
                 byteStream.close();
                 _checkIncomingPacket(confP);
-                if(packets.isEmpty()) break;
-            }catch (IOException | ClassNotFoundException e){
-                if(e instanceof InterruptedIOException){
+                if (packets.isEmpty()) break;
+            } catch (IOException | ClassNotFoundException e) {
+                if (e instanceof InterruptedIOException) {
                     System.err.println("Timed out.");
                 }
             }
         }
     }
 
-    private void _checkIncomingPacket(AckPacket confP){
-        if(lastSentPacket != null && confP.getAckValue() == lastSentPacket.getSeq() + 1){
-            lastSentPacket = null;
-        }
-        int i = 0;
-        while(i < 2 && packets.size() != 0){
-            _sendPacket(packets.remove(0), socket, ip, RECEIVER_PORT);
-            i++;
+    protected void _checkIncomingPacket(Object packet) {
+        if (packet instanceof Connection) {
+            Connection conn = (Connection) packet;
+            if (conn.getStep() == 1) {
+                connected = true;
+            }
+        } else if (packet instanceof AckPacket) {
+            AckPacket confP = (AckPacket) packet;
+            if (lastSentPacket != null && confP.getAckValue() == lastSentPacket.getSeq() + 1) {
+                lastSentPacket = null;
+            }
+            int i = 0;
+            while (i < 2 && packets.size() != 0) {
+                _sendPacket(packets.remove(0), socket, ip, RECEIVER_PORT);
+                i++;
+            }
         }
     }
 
     public static void main(String[] args) {
-        try{
+        try {
             new Sender(FileOperations.readFileAndReturnBytePartsAsPackets("src/main/resources/iris.data"));
-        }catch (Exception e){
+        } catch (Exception e) {
             System.err.println(e.getMessage());
         }
     }
