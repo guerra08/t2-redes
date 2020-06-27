@@ -1,10 +1,11 @@
 package network;
 
+import helper.Colors;
+
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.util.Arrays;
 
 public abstract class UDPCommon {
 
@@ -27,9 +28,12 @@ public abstract class UDPCommon {
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, ip, port);
             socket.send(sendPacket);
             if(packet instanceof Packet){
-                System.out.println("Packet seq " + ((Packet) packet).getSeq());
+                System.out.println(Colors.ANSI_CYAN + "Packet of type " + packet.getClass().getSimpleName() + " with seq "
+                        + ((Packet) packet).getSeq() + " sent to port " + port + Colors.ANSI_RESET + "\n");
             }
-            System.out.println("Packet of type " + packet.getClass().getSimpleName() + " sent to port " + port + "\n");
+            else if(packet instanceof AckPacket)
+                System.out.println(Colors.ANSI_CYAN + "Packet of type " + packet.getClass().getSimpleName() + " with ack "
+                        + ((AckPacket) packet).getAckValue() +  " sent to port " + port +Colors.ANSI_RESET + "\n");
         }catch (Exception e){
             System.err.println(e.getMessage());
         }
@@ -52,7 +56,7 @@ public abstract class UDPCommon {
             _checkIncomingPacket(p);
         } catch (Exception e) {
             if(e instanceof InterruptedIOException){
-                System.err.println("Awaiting connection.");
+                System.err.println("Awaiting connection...");
             }
             else System.err.println(e.getMessage());
         }

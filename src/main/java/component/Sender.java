@@ -1,5 +1,6 @@
 package component;
 
+import helper.Colors;
 import helper.FileOperations;
 import network.AckPacket;
 import network.Connection;
@@ -19,6 +20,7 @@ public class Sender extends UDPCommon {
     private InetAddress ip;
     private ArrayList<Packet> packets;
     private boolean connected;
+    private boolean hasSentAllPackets;
     private int lastAckReceived;
     private int lastSeqSent;
     private int timeoutCount;
@@ -27,10 +29,11 @@ public class Sender extends UDPCommon {
     public Sender(ArrayList<Packet> packets) {
         try {
             connected = false;
+            hasSentAllPackets = false;
             ip = InetAddress.getByName("localhost");
             socket = new DatagramSocket(SENDER_PORT);
             socket.setSoTimeout(500);
-            System.out.println("Starting sender...");
+            System.out.println(Colors.ANSI_BLUE + "Starting sender on port " + SENDER_PORT + "..." + Colors.ANSI_RESET);
             this.packets = packets;
             while(!connected){
                 _sendPacket(new Connection(0), socket, ip, RECEIVER_PORT);
@@ -47,11 +50,16 @@ public class Sender extends UDPCommon {
     }
 
     private void _startSender() {
-        while (connected) {
+        while (connected && !hasSentAllPackets) {
             try {
                 if(timeoutCount == 5){
-                    _sendPacket(packets.get(lastAckReceived), socket, ip, RECEIVER_PORT);
-                    timeoutCount = 0;
+                    if(lastAckReceived >= packets.size()){
+                        hasSentAllPackets = true;
+                    }
+                    else{
+                        _sendPacket(packets.get(lastAckReceived), socket, ip, RECEIVER_PORT);
+                        timeoutCount = 0;
+                    }
                 }
                 else if(repeatedAck == 3){
                     _sendPacket(packets.get(lastAckReceived), socket, ip, RECEIVER_PORT);
@@ -71,7 +79,7 @@ public class Sender extends UDPCommon {
             } catch (IOException | ClassNotFoundException e) {
                 if (e instanceof InterruptedIOException) {
                     if(connected) timeoutCount++;
-                    //System.err.println("Timed out.");
+                    System.out.println(Colors.ANSI_YELLOW + "Sender timed out after 500ms." + Colors.ANSI_RESET);
                 }
             }
         }

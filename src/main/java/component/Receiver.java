@@ -1,5 +1,6 @@
 package component;
 
+import helper.Colors;
 import helper.FileOperations;
 import network.AckPacket;
 import network.Connection;
@@ -31,7 +32,7 @@ public class Receiver extends UDPCommon {
             socket.setSoTimeout(500);
             receivedPackets = new PacketList();
             ack = 0;
-            System.out.println("Starting receiver...");
+            System.out.println(Colors.ANSI_BLUE + "Starting receiver on port " + RECEIVER_PORT + "..." + Colors.ANSI_RESET);
             while(!connected){
                 _connect(socket);
             }
@@ -50,13 +51,13 @@ public class Receiver extends UDPCommon {
                 ByteArrayInputStream byteStream = new ByteArrayInputStream(buf);
                 ObjectInputStream is = new ObjectInputStream(new BufferedInputStream(byteStream));
                 Packet packet = (Packet) is.readObject();
-                System.out.println("Received packet seq " + packet.getSeq() + " of type " + packet.getClass().getSimpleName());
+                System.out.println(Colors.ANSI_GREEN + "Received packet with seq " + packet.getSeq() + " of type " + packet.getClass().getSimpleName() + Colors.ANSI_RESET);
                 is.close();
                 byteStream.close();
                 _checkIncomingPacket(packet);
             }catch (IOException | ClassNotFoundException e){
                 if(e instanceof InterruptedIOException){
-                    //System.err.println("Timed out.");
+                    System.out.println(Colors.ANSI_YELLOW + "Receiver timed out after 500ms." + Colors.ANSI_RESET);
                 }
             }
         }
