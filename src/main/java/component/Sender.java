@@ -10,8 +10,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
 public class Sender extends UDPCommon {
 
@@ -22,14 +20,13 @@ public class Sender extends UDPCommon {
     private ArrayList<Packet> packets;
     private boolean connected;
     private int lastAckReceived;
+    private int lastSeqSent;
     private int timeoutCount;
     private int repeatedAck;
-    private Set<Integer> sentPackets;
 
     public Sender(ArrayList<Packet> packets) {
         try {
             connected = false;
-            sentPackets = new HashSet<>();
             ip = InetAddress.getByName("localhost");
             socket = new DatagramSocket(SENDER_PORT);
             socket.setSoTimeout(500);
@@ -42,6 +39,7 @@ public class Sender extends UDPCommon {
             timeoutCount = 0;
             repeatedAck = 0;
             _sendPacket(packets.get(0), socket, ip, RECEIVER_PORT);
+            lastSeqSent = 0;
             _startSender();
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -95,10 +93,11 @@ public class Sender extends UDPCommon {
             }
             lastAckReceived = confP.getAckValue();
             int i = 0;
-            int ackAux = lastAckReceived;
-            while (i < 2 && ackAux < packets.size()) {
-                _sendPacket(packets.get(ackAux), socket, ip, RECEIVER_PORT);
-                ackAux++;
+            int seqAux = lastSeqSent;
+            while (i < 2 && seqAux < packets.size() - 1) {
+                seqAux++;
+                _sendPacket(packets.get(seqAux), socket, ip, RECEIVER_PORT);
+                lastSeqSent = seqAux;
                 i++;
             }
         }
