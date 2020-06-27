@@ -1,22 +1,22 @@
 package structures;
 
-import network.Packet;
+import network.FilePacket;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
 
-public class PacketList extends AbstractList<Packet> {
+public class PacketList extends AbstractList<FilePacket> {
 
-    private final ArrayList<Packet> _list = new ArrayList<>();
+    private final ArrayList<FilePacket> _list = new ArrayList<>();
 
     @Override
-    public void add(int position, Packet e) {
+    public void add(int position, FilePacket e) {
         _list.add(e);
         _list.sort(null);
     }
 
     @Override
-    public Packet get(int i) {
+    public FilePacket get(int i) {
         return _list.get(i);
     }
 
@@ -25,7 +25,7 @@ public class PacketList extends AbstractList<Packet> {
         return _list.size();
     }
 
-    public ArrayList<Packet> getInternalList(){
+    public ArrayList<FilePacket> getInternalList(){
         return this._list;
     }
 

@@ -3,7 +3,7 @@ package network;
 import java.io.Serializable;
 import java.util.zip.CRC32;
 
-public class Packet implements Serializable, Comparable<Packet> {
+public class FilePacket implements Serializable, Comparable<FilePacket> {
 
     private int seq;
     private byte[] bytes;
@@ -20,7 +20,7 @@ public class Packet implements Serializable, Comparable<Packet> {
      * @param isLast Boolean flag to check if is last packet
      * @param totalSeg Amount of segments from file
      */
-    public Packet(int seq, byte[] bytes, String fName, boolean isLast, int totalSeg) {
+    public FilePacket(int seq, byte[] bytes, String fName, boolean isLast, int totalSeg) {
         CRC32 crcObject = new CRC32();
         crcObject.update(bytes);
         this.seq = seq;
@@ -64,7 +64,7 @@ public class Packet implements Serializable, Comparable<Packet> {
     }
 
     @Override
-    public int compareTo(Packet p){
+    public int compareTo(FilePacket p){
         return Integer.compare(this.seq, p.seq);
     }
 }

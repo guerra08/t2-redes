@@ -1,6 +1,6 @@
 package helper;
 
-import network.Packet;
+import network.FilePacket;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -13,23 +13,23 @@ public class FileOperations {
      * @return <ArrayList<Packet>> List of packets
      * @throws IOException If file reading is not ok
      */
-    public static ArrayList<Packet> readFileAndReturnBytePartsAsPackets(String fileName) throws IOException {
+    public static ArrayList<FilePacket> readFileAndReturnBytePartsAsPackets(String fileName) throws IOException {
         RandomAccessFile raf = new RandomAccessFile(fileName, "r");
         String fName = fileName.substring(fileName.lastIndexOf('/') + 1);
         byte[] fileBytes = new byte[(int) raf.length()];
         raf.readFully(fileBytes);
         raf.close();
-        ArrayList<Packet> partsArray = new ArrayList<>();
+        ArrayList<FilePacket> partsArray = new ArrayList<>();
         int parts = fileBytes.length / 512;
         if(parts == 0){
-            Packet p = new Packet(0, Arrays.copyOfRange(fileBytes, 0, fileBytes.length), fName, true, parts + 1);
+            FilePacket p = new FilePacket(0, Arrays.copyOfRange(fileBytes, 0, fileBytes.length), fName, true, parts + 1);
             partsArray.add(p);
         }
         else{
             int start = 0;
             for (int i = 0; i <= parts; i++){
                 int end = Math.min(start + 512, fileBytes.length);
-                Packet p = new Packet(i, Arrays.copyOfRange(fileBytes, start, end), fName, i == (parts), parts + 1);
+                FilePacket p = new FilePacket(i, Arrays.copyOfRange(fileBytes, start, end), fName, i == (parts), parts + 1);
                 partsArray.add(p);
                 start += 512;
             }
@@ -39,14 +39,14 @@ public class FileOperations {
 
     /**
      * Given a list of packets, mount them in a new file.
-     * @param packets The list of packets
+     * @param filePackets The list of packets
      */
-    public static void mountFileFromPackets(ArrayList<Packet> packets){
+    public static void mountFileFromPackets(ArrayList<FilePacket> filePackets){
         try{
-            File fileToCreate = new File("src/main/resources/received/" + packets.get(0).getFName());
+            File fileToCreate = new File("src/main/resources/received/" + filePackets.get(0).getFName());
             OutputStream os = new FileOutputStream(fileToCreate);
-            while(!packets.isEmpty()){
-                os.write(packets.remove(0).getBytes());
+            while(!filePackets.isEmpty()){
+                os.write(filePackets.remove(0).getBytes());
             }
             os.close();
         }catch (Exception e){

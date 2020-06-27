@@ -3,8 +3,8 @@ package component;
 import helper.Colors;
 import helper.FileOperations;
 import network.AckPacket;
-import network.Connection;
-import network.Packet;
+import network.ConnPacket;
+import network.FilePacket;
 import network.UDPCommon;
 import java.io.*;
 import java.net.DatagramPacket;
@@ -18,7 +18,7 @@ public class Sender extends UDPCommon {
     private final int RECEIVER_PORT = 9877;
     private DatagramSocket socket;
     private InetAddress ip;
-    private ArrayList<Packet> packets;
+    private ArrayList<FilePacket> filePackets;
     private boolean connected;
     private boolean hasSentAllPackets;
     private int lastAckReceived;
@@ -26,7 +26,7 @@ public class Sender extends UDPCommon {
     private int timeoutCount;
     private int repeatedAck;
 
-    public Sender(ArrayList<Packet> packets) {
+    public Sender(ArrayList<FilePacket> filePackets) {
         try {
             connected = false;
             hasSentAllPackets = false;
@@ -34,14 +34,14 @@ public class Sender extends UDPCommon {
             socket = new DatagramSocket(SENDER_PORT);
             socket.setSoTimeout(500);
             System.out.println(Colors.ANSI_BLUE + "Starting sender on port " + SENDER_PORT + "..." + Colors.ANSI_RESET);
-            this.packets = packets;
+            this.filePackets = filePackets;
             while(!connected){
-                _sendPacket(new Connection(0), socket, ip, RECEIVER_PORT);
+                _sendPacket(new ConnPacket(0), socket, ip, RECEIVER_PORT);
                 _connect(socket);
             }
             timeoutCount = 0;
             repeatedAck = 0;
-            _sendPacket(packets.get(0), socket, ip, RECEIVER_PORT);
+            _sendPacket(filePackets.get(0), socket, ip, RECEIVER_PORT);
             lastSeqSent = 0;
             _startSender();
         } catch (Exception e) {
@@ -53,16 +53,16 @@ public class Sender extends UDPCommon {
         while (connected && !hasSentAllPackets) {
             try {
                 if(timeoutCount == 5){
-                    if(lastAckReceived >= packets.size()){
+                    if(lastAckReceived >= filePackets.size()){
                         hasSentAllPackets = true;
                     }
                     else{
-                        _sendPacket(packets.get(lastAckReceived), socket, ip, RECEIVER_PORT);
+                        _sendPacket(filePackets.get(lastAckReceived), socket, ip, RECEIVER_PORT);
                         timeoutCount = 0;
                     }
                 }
                 else if(repeatedAck == 3){
-                    _sendPacket(packets.get(lastAckReceived), socket, ip, RECEIVER_PORT);
+                    _sendPacket(filePackets.get(lastAckReceived), socket, ip, RECEIVER_PORT);
                     repeatedAck = 0;
                 }
                 else{
@@ -86,8 +86,8 @@ public class Sender extends UDPCommon {
     }
 
     protected void _checkIncomingPacket(Object packet) {
-        if (packet instanceof Connection) {
-            Connection conn = (Connection) packet;
+        if (packet instanceof ConnPacket) {
+            ConnPacket conn = (ConnPacket) packet;
             if (conn.getStep() == 1) {
                 connected = true;
             }
@@ -102,9 +102,9 @@ public class Sender extends UDPCommon {
             lastAckReceived = confP.getAckValue();
             int i = 0;
             int seqAux = lastSeqSent;
-            while (i < 2 && seqAux < packets.size() - 1) {
+            while (i < 2 && seqAux < filePackets.size() - 1) {
                 seqAux++;
-                _sendPacket(packets.get(seqAux), socket, ip, RECEIVER_PORT);
+                _sendPacket(filePackets.get(seqAux), socket, ip, RECEIVER_PORT);
                 lastSeqSent = seqAux;
                 i++;
             }

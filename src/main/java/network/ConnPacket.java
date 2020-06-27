@@ -2,11 +2,11 @@ package network;
 
 import java.io.Serializable;
 
-public class Connection implements Serializable {
+public class ConnPacket implements Serializable {
 
     private int step;
 
-    public Connection(int step) { this.step = step; }
+    public ConnPacket(int step) { this.step = step; }
 
     public int getStep() { return step; }
 

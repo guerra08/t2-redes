@@ -27,9 +27,9 @@ public abstract class UDPCommon {
             bos.close();
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, ip, port);
             socket.send(sendPacket);
-            if(packet instanceof Packet){
+            if(packet instanceof FilePacket){
                 System.out.println(Colors.ANSI_CYAN + "Packet of type " + packet.getClass().getSimpleName() + " with seq "
-                        + ((Packet) packet).getSeq() + " sent to port " + port + Colors.ANSI_RESET + "\n");
+                        + ((FilePacket) packet).getSeq() + " sent to port " + port + Colors.ANSI_RESET + "\n");
             }
             else if(packet instanceof AckPacket)
                 System.out.println(Colors.ANSI_CYAN + "Packet of type " + packet.getClass().getSimpleName() + " with ack "
