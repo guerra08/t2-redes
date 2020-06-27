@@ -10,6 +10,7 @@ public class Packet implements Serializable, Comparable<Packet> {
     private String fName;
     private final long crc;
     private boolean isLastPacket;
+    private int totalSegments;
 
     /**
      * Creates a new object of type Packet
@@ -17,8 +18,9 @@ public class Packet implements Serializable, Comparable<Packet> {
      * @param bytes Bytes stored from file
      * @param fName Name of the file
      * @param isLast Boolean flag to check if is last packet
+     * @param totalSeg Amount of segments from file
      */
-    public Packet(int seq, byte[] bytes, String fName, boolean isLast) {
+    public Packet(int seq, byte[] bytes, String fName, boolean isLast, int totalSeg) {
         CRC32 crcObject = new CRC32();
         crcObject.update(bytes);
         this.seq = seq;
@@ -26,6 +28,7 @@ public class Packet implements Serializable, Comparable<Packet> {
         this.fName = fName;
         this.isLastPacket = isLast;
         this.crc = crcObject.getValue();
+        this.totalSegments = totalSeg;
     }
 
     public String getFName() { return fName; }
@@ -45,6 +48,14 @@ public class Packet implements Serializable, Comparable<Packet> {
     public void setBytes(byte[] bytes) { this.bytes = bytes; }
 
     public long getCrc(){ return this.crc; }
+
+    public String getfName() { return fName; }
+
+    public void setfName(String fName) { this.fName = fName; }
+
+    public int getTotalSegments() { return totalSegments; }
+
+    public void setTotalSegments(int totalSegments) { this.totalSegments = totalSegments; }
 
     public static long calculateCRC(byte[] byteArray){
         CRC32 crcObject = new CRC32();

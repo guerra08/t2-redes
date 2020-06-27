@@ -10,6 +10,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Sender extends UDPCommon {
 
@@ -20,10 +22,14 @@ public class Sender extends UDPCommon {
     private ArrayList<Packet> packets;
     private boolean connected;
     private int lastAckReceived;
+    private int timeoutCount;
+    private int repeatedAck;
+    private Set<Integer> sentPackets;
 
     public Sender(ArrayList<Packet> packets) {
         try {
             connected = false;
+            sentPackets = new HashSet<>();
             ip = InetAddress.getByName("localhost");
             socket = new DatagramSocket(SENDER_PORT);
             socket.setSoTimeout(500);
@@ -33,6 +39,8 @@ public class Sender extends UDPCommon {
                 _sendPacket(new Connection(0), socket, ip, RECEIVER_PORT);
                 _connect(socket);
             }
+            timeoutCount = 0;
+            repeatedAck = 0;
             _sendPacket(packets.get(0), socket, ip, RECEIVER_PORT);
             _startSender();
         } catch (Exception e) {
@@ -41,20 +49,31 @@ public class Sender extends UDPCommon {
     }
 
     private void _startSender() {
-        while (true) {
+        while (connected) {
             try {
-                byte[] buf = new byte[1024];
-                DatagramPacket dp = new DatagramPacket(buf, buf.length);
-                socket.receive(dp);
-                ByteArrayInputStream byteStream = new ByteArrayInputStream(buf);
-                ObjectInputStream is = new ObjectInputStream(new BufferedInputStream(byteStream));
-                AckPacket confP = (AckPacket) is.readObject();
-                is.close();
-                byteStream.close();
-                _checkIncomingPacket(confP);
+                if(timeoutCount == 5){
+                    _sendPacket(packets.get(lastAckReceived), socket, ip, RECEIVER_PORT);
+                    timeoutCount = 0;
+                }
+                else if(repeatedAck == 3){
+                    _sendPacket(packets.get(lastAckReceived), socket, ip, RECEIVER_PORT);
+                    repeatedAck = 0;
+                }
+                else{
+                    byte[] buf = new byte[1024];
+                    DatagramPacket dp = new DatagramPacket(buf, buf.length);
+                    socket.receive(dp);
+                    ByteArrayInputStream byteStream = new ByteArrayInputStream(buf);
+                    ObjectInputStream is = new ObjectInputStream(new BufferedInputStream(byteStream));
+                    AckPacket confP = (AckPacket) is.readObject();
+                    is.close();
+                    byteStream.close();
+                    _checkIncomingPacket(confP);
+                }
             } catch (IOException | ClassNotFoundException e) {
                 if (e instanceof InterruptedIOException) {
-                    System.err.println("Timed out.");
+                    if(connected) timeoutCount++;
+                    //System.err.println("Timed out.");
                 }
             }
         }
@@ -68,6 +87,12 @@ public class Sender extends UDPCommon {
             }
         } else if (packet instanceof AckPacket) {
             AckPacket confP = (AckPacket) packet;
+            if(lastAckReceived == confP.getAckValue()){
+                repeatedAck++;
+            }
+            else{
+                repeatedAck = 0;
+            }
             lastAckReceived = confP.getAckValue();
             int i = 0;
             int ackAux = lastAckReceived;

@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.Arrays;
 
 public abstract class UDPCommon {
 
@@ -40,7 +41,7 @@ public abstract class UDPCommon {
      */
     protected void _connect(DatagramSocket socket) {
         try {
-            byte[] buf = new byte[512];
+            byte[] buf = new byte[1024];
             DatagramPacket dp = new DatagramPacket(buf, buf.length);
             socket.receive(dp);
             ByteArrayInputStream byteStream = new ByteArrayInputStream(buf);

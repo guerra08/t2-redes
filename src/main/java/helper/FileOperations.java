@@ -21,16 +21,15 @@ public class FileOperations {
         raf.close();
         ArrayList<Packet> partsArray = new ArrayList<>();
         int parts = fileBytes.length / 512;
-        System.out.println(parts);
         if(parts == 0){
-            Packet p = new Packet(0, Arrays.copyOfRange(fileBytes, 0, fileBytes.length), fName, true);
+            Packet p = new Packet(0, Arrays.copyOfRange(fileBytes, 0, fileBytes.length), fName, true, parts + 1);
             partsArray.add(p);
         }
         else{
             int start = 0;
             for (int i = 0; i <= parts; i++){
                 int end = Math.min(start + 512, fileBytes.length);
-                Packet p = new Packet(i, Arrays.copyOfRange(fileBytes, start, end), fName, i == (parts));
+                Packet p = new Packet(i, Arrays.copyOfRange(fileBytes, start, end), fName, i == (parts), parts + 1);
                 partsArray.add(p);
                 start += 512;
             }

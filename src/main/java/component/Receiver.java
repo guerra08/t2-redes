@@ -56,7 +56,7 @@ public class Receiver extends UDPCommon {
                 _checkIncomingPacket(packet);
             }catch (IOException | ClassNotFoundException e){
                 if(e instanceof InterruptedIOException){
-                    System.err.println("Timed out.");
+                    //System.err.println("Timed out.");
                 }
             }
         }
@@ -68,22 +68,24 @@ public class Receiver extends UDPCommon {
             if(conn.getStep() == 0){
                 conn.increaseStep();
                 _sendPacket(conn, socket, ip, SENDER_PORT);
-                connected = true;
             }
         }
         else if(packet instanceof Packet){
             Packet dPacket = (Packet) packet;
+            if(dPacket.getSeq() == 0) connected = true;
             if(dPacket.getCrc() == Packet.calculateCRC(dPacket.getBytes())){
                 if(dPacket.getSeq() == ack){
                     ack++;
                     receivedPackets.add(dPacket);
-                    _sendPacket(new AckPacket(ack), socket, ip, SENDER_PORT);
                 }
             }
+            _sendPacket(new AckPacket(ack), socket, ip, SENDER_PORT);
             if(dPacket.isLastPacket()){
                 System.out.println("Last packet received, seq " + dPacket.getSeq());
-                FileOperations.mountFileFromPackets(receivedPackets.getInternalList());
-                receivedAllPackets = true;
+                if(receivedPackets.size() == dPacket.getTotalSegments()){
+                    FileOperations.mountFileFromPackets(receivedPackets.getInternalList());
+                    receivedAllPackets = true;
+                }
             }
         }
     }
