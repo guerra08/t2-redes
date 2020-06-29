@@ -57,7 +57,7 @@ public class Sender extends UDPCommon {
      * @throws SocketException Regarding SOTimeout
      */
     protected void _receivePacket() throws SocketException {
-        while (connected && !hasSentAllPackets && resentLastCount <= 5) {
+        while (!hasSentAllPackets && resentLastCount <= 5) {
             try {
                 if(lastAckReceived >= filePackets.size()){
                     hasSentAllPackets = true;
@@ -89,6 +89,7 @@ public class Sender extends UDPCommon {
                 }
             }
         }
+        System.out.println("\n" + Colors.ANSI_YELLOW + "Stopping Sender..." + Colors.ANSI_RESET);
     }
 
     /**
