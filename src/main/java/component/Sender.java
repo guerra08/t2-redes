@@ -52,6 +52,10 @@ public class Sender extends UDPCommon {
         }
     }
 
+    /**
+     * Updates the application state if necessary, receives a packet and sends it to the checking method.
+     * @throws SocketException Regarding SOTimeout
+     */
     protected void _receivePacket() throws SocketException {
         while (connected && !hasSentAllPackets && resentLastCount <= 5) {
             try {
@@ -87,6 +91,10 @@ public class Sender extends UDPCommon {
         }
     }
 
+    /**
+     * Checks an incoming packet and executes the correct actions according to the state of the application.
+     * @param packet Received packet
+     */
     protected void _checkIncomingPacket(Object packet) {
         if (packet instanceof ConnPacket) {
             ConnPacket conn = (ConnPacket) packet;

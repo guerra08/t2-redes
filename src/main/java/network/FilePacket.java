@@ -58,7 +58,7 @@ public class FilePacket implements Serializable, Comparable<FilePacket> {
         crcObject.update(byteArray);
         return crcObject.getValue();
     }
-
+    
     @Override
     public int compareTo(FilePacket p){
         return Integer.compare(this.seq, p.seq);

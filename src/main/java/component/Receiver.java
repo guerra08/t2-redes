@@ -43,6 +43,10 @@ public class Receiver extends UDPCommon {
         }
     }
 
+    /**
+     * Receives a packet and sends it to the checking method.
+     * @throws SocketException Regarding SOTimeout
+     */
     protected void _receivePacket() throws SocketException {
         while(!receivedAllPackets){
             try{
@@ -64,6 +68,10 @@ public class Receiver extends UDPCommon {
         }
     }
 
+    /**
+     * Checks an incoming packet and executes the correct actions according to the state of the application.
+     * @param packet Received packet
+     */
     protected void _checkIncomingPacket(Object packet){
         if(packet instanceof ConnPacket){
             ConnPacket conn = (ConnPacket) packet;
@@ -74,6 +82,7 @@ public class Receiver extends UDPCommon {
         }
         else if(packet instanceof FilePacket){
             FilePacket filePacket = (FilePacket) packet;
+            //The Receiver is considered "connected" after it receives the first packet (seq 0)
             if(filePacket.getSeq() == 0) connected = true;
             if(filePacket.getCrc() == FilePacket.calculateCRC(filePacket.getBytes())){
                 if(filePacket.getSeq() == ack){

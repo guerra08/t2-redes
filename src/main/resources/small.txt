@@ -1,1 +1,1 @@
-E aí pessoal, tudo bem? Aqui quem fala é o Edu.
+Hello, world! This is a text file.

@@ -5,6 +5,10 @@ import network.FilePacket;
 import java.util.AbstractList;
 import java.util.ArrayList;
 
+/**
+ * Structure to manage and store received packets in the Receiver.java class.
+ * Stores them, in and ArrayList, in increasing seq order.
+ */
 public class PacketList extends AbstractList<FilePacket> {
 
     private final ArrayList<FilePacket> _list = new ArrayList<>();
