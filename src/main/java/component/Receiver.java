@@ -11,6 +11,7 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 
 public class Receiver extends UDPCommon {
 
@@ -29,20 +30,20 @@ public class Receiver extends UDPCommon {
             connected = false;
             ip = InetAddress.getByName("localhost");
             socket = new DatagramSocket(RECEIVER_PORT);
-            socket.setSoTimeout(500);
+            socket.setSoTimeout(333);
             receivedPackets = new PacketList();
             ack = 0;
             System.out.println(Colors.ANSI_BLUE + "Starting receiver on port " + RECEIVER_PORT + "..." + Colors.ANSI_RESET);
             while(!connected){
                 _connect(socket);
             }
-            _startReceiver();
+            _receivePacket();
         }catch (Exception e){
             System.err.println(e.getMessage());
         }
     }
 
-    private void _startReceiver(){
+    protected void _receivePacket() throws SocketException {
         while(!receivedAllPackets){
             try{
                 byte[] buf = new byte[1024];
@@ -57,7 +58,7 @@ public class Receiver extends UDPCommon {
                 _checkIncomingPacket(filePacket);
             }catch (IOException | ClassNotFoundException e){
                 if(e instanceof InterruptedIOException){
-                    System.out.println(Colors.ANSI_YELLOW + "Receiver timed out after 500ms." + Colors.ANSI_RESET);
+                    System.out.println(Colors.ANSI_YELLOW + "Receiver timed out after " + socket.getSoTimeout() + "ms." + Colors.ANSI_RESET);
                 }
             }
         }
@@ -72,18 +73,18 @@ public class Receiver extends UDPCommon {
             }
         }
         else if(packet instanceof FilePacket){
-            FilePacket dFilePacket = (FilePacket) packet;
-            if(dFilePacket.getSeq() == 0) connected = true;
-            if(dFilePacket.getCrc() == FilePacket.calculateCRC(dFilePacket.getBytes())){
-                if(dFilePacket.getSeq() == ack){
+            FilePacket filePacket = (FilePacket) packet;
+            if(filePacket.getSeq() == 0) connected = true;
+            if(filePacket.getCrc() == FilePacket.calculateCRC(filePacket.getBytes())){
+                if(filePacket.getSeq() == ack){
                     ack++;
-                    receivedPackets.add(dFilePacket);
+                    receivedPackets.add(filePacket);
+                    System.out.println(Colors.ANSI_GREEN + "Packet with seq " + filePacket.getSeq() + " has been processed." + Colors.ANSI_RESET);
                 }
             }
             _sendPacket(new AckPacket(ack), socket, ip, SENDER_PORT);
-            if(dFilePacket.isLastPacket()){
-                System.out.println("Last packet received, seq " + dFilePacket.getSeq());
-                if(receivedPackets.size() == dFilePacket.getTotalSegments()){
+            if(filePacket.isLastPacket()){
+                if(receivedPackets.size() == filePacket.getTotalSegments()){
                     FileOperations.mountFileFromPackets(receivedPackets.getInternalList());
                     receivedAllPackets = true;
                 }

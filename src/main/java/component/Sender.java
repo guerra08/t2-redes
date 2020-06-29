@@ -10,6 +10,7 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.ArrayList;
 
 public class Sender extends UDPCommon {
@@ -25,61 +26,62 @@ public class Sender extends UDPCommon {
     private int lastSeqSent;
     private int timeoutCount;
     private int repeatedAck;
+    private int resentLastCount;
 
     public Sender(ArrayList<FilePacket> filePackets) {
         try {
             connected = false;
+            resentLastCount = 0;
+            lastSeqSent = 0;
+            timeoutCount = 0;
+            repeatedAck = 0;
             hasSentAllPackets = false;
+            this.filePackets = filePackets;
             ip = InetAddress.getByName("localhost");
             socket = new DatagramSocket(SENDER_PORT);
-            socket.setSoTimeout(500);
+            socket.setSoTimeout(333);
             System.out.println(Colors.ANSI_BLUE + "Starting sender on port " + SENDER_PORT + "..." + Colors.ANSI_RESET);
-            this.filePackets = filePackets;
             while(!connected){
                 _sendPacket(new ConnPacket(0), socket, ip, RECEIVER_PORT);
                 _connect(socket);
             }
-            timeoutCount = 0;
-            repeatedAck = 0;
             _sendPacket(filePackets.get(0), socket, ip, RECEIVER_PORT);
-            lastSeqSent = 0;
-            _startSender();
+            _receivePacket();
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
     }
 
-    private void _startSender() {
-        while (connected && !hasSentAllPackets) {
+    protected void _receivePacket() throws SocketException {
+        while (connected && !hasSentAllPackets && resentLastCount <= 5) {
             try {
-                if(timeoutCount == 5){
-                    if(lastAckReceived >= filePackets.size()){
-                        hasSentAllPackets = true;
+                if(lastAckReceived >= filePackets.size()){
+                    hasSentAllPackets = true;
+                }
+                else if(timeoutCount == 5){
+                    _sendPacket(filePackets.get(lastAckReceived), socket, ip, RECEIVER_PORT);
+                    if(lastAckReceived == filePackets.size() - 1){
+                        resentLastCount++;
                     }
-                    else{
-                        _sendPacket(filePackets.get(lastAckReceived), socket, ip, RECEIVER_PORT);
-                        timeoutCount = 0;
-                    }
+                    timeoutCount = 0;
                 }
                 else if(repeatedAck == 3){
                     _sendPacket(filePackets.get(lastAckReceived), socket, ip, RECEIVER_PORT);
                     repeatedAck = 0;
                 }
-                else{
-                    byte[] buf = new byte[1024];
-                    DatagramPacket dp = new DatagramPacket(buf, buf.length);
-                    socket.receive(dp);
-                    ByteArrayInputStream byteStream = new ByteArrayInputStream(buf);
-                    ObjectInputStream is = new ObjectInputStream(new BufferedInputStream(byteStream));
-                    AckPacket confP = (AckPacket) is.readObject();
-                    is.close();
-                    byteStream.close();
-                    _checkIncomingPacket(confP);
-                }
+                byte[] buf = new byte[1024];
+                DatagramPacket dp = new DatagramPacket(buf, buf.length);
+                socket.receive(dp);
+                ByteArrayInputStream byteStream = new ByteArrayInputStream(buf);
+                ObjectInputStream is = new ObjectInputStream(new BufferedInputStream(byteStream));
+                AckPacket confP = (AckPacket) is.readObject();
+                is.close();
+                byteStream.close();
+                _checkIncomingPacket(confP);
             } catch (IOException | ClassNotFoundException e) {
                 if (e instanceof InterruptedIOException) {
                     if(connected) timeoutCount++;
-                    System.out.println(Colors.ANSI_YELLOW + "Sender timed out after 500ms." + Colors.ANSI_RESET);
+                    System.out.println(Colors.ANSI_YELLOW + "Sender timed out after " + socket.getSoTimeout() + "ms." + Colors.ANSI_RESET);
                 }
             }
         }
@@ -93,6 +95,7 @@ public class Sender extends UDPCommon {
             }
         } else if (packet instanceof AckPacket) {
             AckPacket confP = (AckPacket) packet;
+            System.out.println(Colors.ANSI_GREEN + "Received packet with ack " + confP.getAckValue() + " of type " + confP.getClass().getSimpleName() + Colors.ANSI_RESET);
             if(lastAckReceived == confP.getAckValue()){
                 repeatedAck++;
             }
@@ -113,7 +116,7 @@ public class Sender extends UDPCommon {
 
     public static void main(String[] args) {
         try {
-            new Sender(FileOperations.readFileAndReturnBytePartsAsPackets("src/main/resources/iris.data"));
+            new Sender(FileOperations.readFileAndReturnBytePartsAsPackets(args[0]));
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }

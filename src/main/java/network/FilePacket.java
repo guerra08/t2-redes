@@ -49,10 +49,6 @@ public class FilePacket implements Serializable, Comparable<FilePacket> {
 
     public long getCrc(){ return this.crc; }
 
-    public String getfName() { return fName; }
-
-    public void setfName(String fName) { this.fName = fName; }
-
     public int getTotalSegments() { return totalSegments; }
 
     public void setTotalSegments(int totalSegments) { this.totalSegments = totalSegments; }

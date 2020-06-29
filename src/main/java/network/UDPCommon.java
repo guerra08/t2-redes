@@ -6,6 +6,7 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 
 public abstract class UDPCommon {
 
@@ -56,7 +57,7 @@ public abstract class UDPCommon {
             _checkIncomingPacket(p);
         } catch (Exception e) {
             if(e instanceof InterruptedIOException){
-                System.err.println("Awaiting connection...");
+                System.out.println(Colors.ANSI_YELLOW + "Awaiting connection..." + Colors.ANSI_RESET);
             }
             else System.err.println(e.getMessage());
         }
@@ -67,4 +68,9 @@ public abstract class UDPCommon {
      * @param packet Received packet
      */
     protected abstract void _checkIncomingPacket(Object packet);
+
+    /**
+     * Method for receiving incoming packets
+     */
+    protected abstract void _receivePacket() throws SocketException;
 }
