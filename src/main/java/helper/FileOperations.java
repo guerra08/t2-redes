@@ -43,13 +43,13 @@ public class FileOperations {
      */
     public static void mountFileFromPackets(ArrayList<FilePacket> filePackets){
         try{
-            File fileToCreate = new File("./" + filePackets.get(0).getFName());
+            File fileToCreate = new File(System.getProperty("user.dir") + File.separator + filePackets.get(0).getFName());
             OutputStream os = new FileOutputStream(fileToCreate);
             while(!filePackets.isEmpty()){
                 os.write(filePackets.remove(0).getBytes());
             }
             os.close();
-            System.out.println(Colors.ANSI_GREEN + "File " + fileToCreate.getName() + " has been saved." + Colors.ANSI_RESET);
+            System.out.println(Colors.ANSI_GREEN + "File " + fileToCreate.getAbsolutePath() + " has been saved." + Colors.ANSI_RESET);
         }catch (Exception e){
             System.err.println(e.getMessage());
         }
